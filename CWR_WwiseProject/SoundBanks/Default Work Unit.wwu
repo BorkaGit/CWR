@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{9C43B08A-C62E-429D-9849-436A67A1DBA8}" SchemaVersion="123">
+	<SoundBanks>
+		<WorkUnit Name="Default Work Unit" ID="{9C43B08A-C62E-429D-9849-436A67A1DBA8}" PersistMode="Standalone">
+			<ChildrenList>
+				<SoundBank Name="ValSound" ID="{D2D9D1F3-843E-4EAF-909B-50D14BD47E54}">
+					<ObjectInclusionList>
+						<ObjectRef Name="ValFire" ID="{548C8CCD-3A26-4F6A-941F-B12A4AFF851B}" WorkUnitID="{E6B743DD-23CA-4137-AA7B-5F5BD6AD533D}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+			</ChildrenList>
+		</WorkUnit>
+	</SoundBanks>
+</WwiseDocument>

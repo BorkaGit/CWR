@@ -1,0 +1,47 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Windows",
+  "BasePlatform": "Windows",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "154",
+  "SoundBanks": [
+   {
+    "Id": "2773228839",
+    "Type": "User",
+    "GUID": "{D2D9D1F3-843E-4EAF-909B-50D14BD47E54}",
+    "Language": "SFX",
+    "Hash": "{91CC1776-B604-CB50-4BBC-7ED4B97EB997}",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\ValSound",
+    "ShortName": "ValSound",
+    "Path": "ValSound.bnk",
+    "Media": [
+     {
+      "Id": "363985410",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "valsound.wav",
+      "CachePath": "59/{595F27B7-C047-EC7B-BFE5-DE932BF57A09}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "3195224366",
+      "Name": "ValFire",
+      "ObjectPath": "\\Events\\Default Work Unit\\ValFire",
+      "GUID": "{548C8CCD-3A26-4F6A-941F-B12A4AFF851B}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.6841429",
+      "DurationMax": "0.6841429",
+      "MediaRefs": [
+       {
+        "Id": "363985410"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "FileHash": "{E5BDB391-7105-FCBF-BE51-AFB7234B2E5B}"
+ }
+}
