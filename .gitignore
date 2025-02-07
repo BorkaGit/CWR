@@ -48,6 +48,7 @@ SourceArt/**/*.tga
 
 # Binary Files - we need to track them as well to have an compiled dll files on all machines with no VS installed
 #Binaries/*
+Binaries
 Binaries/*
 Binaries/Mac/*
 Binaries/TVOS/*
@@ -120,6 +121,4 @@ CWR_WwiseProject
 CWR_WwiseProject/*
 
 CWR.sln.DotSettings.user
-
-Content
-Content/*
+/Binaries/Win64

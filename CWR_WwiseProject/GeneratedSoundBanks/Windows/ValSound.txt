@@ -1,6 +1,0 @@
-Event	ID	Name			Wwise Object Path	Notes
-	3195224366	ValFire			\Default Work Unit\ValFire	
-
-In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
-	363985410	ValFire	E:\UnrealProjects\CWR\CWR_WwiseProject\.cache\59\{595F27B7-C047-EC7B-BFE5-DE932BF57A09}.wem		\Actor-Mixer Hierarchy\Default Work Unit\ValFire		127712
-
