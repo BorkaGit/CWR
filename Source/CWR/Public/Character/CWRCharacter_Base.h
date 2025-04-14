@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayCueInterface.h"
 #include "GameplayTagAssetInterface.h"
@@ -11,6 +10,7 @@
 #include "Teams/CWRTeamAgentInterface.h"
 #include "CWRCharacter_Base.generated.h"
 
+class USplineComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class ACWRWeaponActor;
@@ -30,6 +30,9 @@ class UAbilitySystemComponent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnWeaponStatChanged, int32)
 DECLARE_MULTICAST_DELEGATE(FOnTeamSet);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdateDT, FName, WeaponSlot);
+
 
 /**
  * FCWRReplicatedAcceleration: Compressed representation of acceleration
@@ -88,6 +91,15 @@ struct TStructOpsTypeTraits<FSharedRepMovement> : public TStructOpsTypeTraitsBas
 	};
 };
 
+UENUM(BlueprintType)
+enum class ECWRMovementMode : uint8
+{
+	Walking,
+	Sprinting,
+	Aiming,
+	Slidings
+};
+
 UCLASS()
 class CWR_API ACWRCharacter_Base : public AModularCharacter, public IAbilitySystemInterface, public IGameplayCueInterface, public IGameplayTagAssetInterface, public ICWRTeamAgentInterface
 {
@@ -118,6 +130,7 @@ public:
 	//~AActor interface
 	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Reset() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -152,6 +165,54 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsWaitingForTeamSet() const { return bIsWaitingForTeamSet; }
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void UpdateRecoilParameters(ACWRWeaponActor* TargetWeapon);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SVR_UpdateDT(FName WeaponSlot);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SVR_EnterAiming();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_EnterAiming();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SVR_ExitAiming();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SVR_PlayUnequipWeaponMontageTP();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SVR_UpdateCurrentWeapon(ACWRWeaponActor* NewCurrentWeapon);
+
+	UFUNCTION(BlueprintCallable, Server, Unreliable)
+	void SVR_Lean(float InLean);
+	
+	UFUNCTION(BlueprintCallable, Server, Unreliable)
+	void SVR_ArmsRotateLean(float InLeanHands);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_ExitAiming();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MC_UpdateDT(FName WeaponSlot);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Unreliable)
+	void MC_PlayUnequipWeaponMontage();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUpdateDT OnUpdateDT;
+
+	UFUNCTION(BlueprintCallable)
+	void SetFiringTP(bool bInFiring);
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void ControllerPitchYawRecoil();
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void ApplyRecoil();
 	
 protected:
 
@@ -191,7 +252,7 @@ protected:
 	void K2_OnDeathFinished();
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode) override;
-	void SetMovementModeTag(EMovementMode MovementMode, uint8 CustomMovementMode, bool bTagEnabled);
+	//void SetMovementModeTag(EMovementMode MovementMode, uint8 CustomMovementMode, bool bTagEnabled);
 
 	virtual bool CanJumpInternal_Implementation() const;
 
@@ -201,12 +262,76 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AddInitialInventory();
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float BaseWalkSpeed = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ragdoll")
+	UFUNCTION(BlueprintCallable)
+	void EnterAiming();
+
+	UFUNCTION(BlueprintCallable)
+	void ExitAiming();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void EnterAimingVFX();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ExitAimingVFX();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ragdoll")
 	float RagdollImpulseStrength = 500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	TObjectPtr<UCurveFloat> PitchRecoilCurve = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	TObjectPtr<UCurveFloat> YawRecoilCurve = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	float HipFireCurveRecoilMultiplier = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	float RecoilRecoverSpeed = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	float HipFireRecoilLocationMultiplier = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recoil")
+	float HipFireRecoilRotationMultiplier = 0.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	float LengthOfWeapon = 55.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_bFiring, Category = "Weapon")
+	bool bFiring = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	bool bChangingWeapon = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	bool bIsLeaning = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ADS")
+	float TimeFromAim = 0.5f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ADS")
+	float TimeToAim = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ADS")
+	float CycleSightSpeed = 0.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ADS")
+	float ADSFov = 80.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> WeaponMoveSound;
+
+	UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_CurrentWeapon)
+	TObjectPtr<ACWRWeaponActor> CurrentWeapon;
+
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<ACWRWeaponActor> PrimaryWeapon;
+
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<ACWRWeaponActor> SecondaryWeapon;
+	
 public:
 
 	UFUNCTION(BlueprintCallable)
@@ -217,12 +342,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SetWalking( bool IsWalking ) const;
-
+	
 	UFUNCTION(BlueprintPure)
 	bool IsWalking() const;
 	
 	virtual void DropItem();
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnAimingStarted();
 
@@ -247,6 +372,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetHasWeaponInHands(const bool InbHasWeaponInHands ) { bHasWeaponInHands = InbHasWeaponInHands; }
 
+	FORCEINLINE void SetLengthOfWeapon(const float InLengthOfWeapon) { LengthOfWeapon = InLengthOfWeapon; }
+	FORCEINLINE void SetTimeFromAim(const float InTimeFromAim) { TimeFromAim = InTimeFromAim; }
+	FORCEINLINE void SetTimeToAim(const float InTimeToAim) { TimeToAim = InTimeToAim; }
+	FORCEINLINE void SetCycleSightSpeed(const float InCycleSightSpeed) { CycleSightSpeed = InCycleSightSpeed; }
+	FORCEINLINE void SetADSFov(const float InADSFov) { ADSFov = InADSFov; }
+
+	FORCEINLINE void SetCurrentWeapon(const TObjectPtr<ACWRWeaponActor>& InCurrentWeapon) { CurrentWeapon = InCurrentWeapon; }
+	
 	UFUNCTION(BlueprintCallable)
 	UCWREquipmentInstance* GetItemInHands() const;
 
@@ -305,34 +438,41 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_SightTransform)
-	FTransform SightTransform = FTransform::Identity;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float BaseWalkSpeed = 100.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float ForwardAxisValue = 0.f;
 
-	UFUNCTION()
-	void OnRep_SightTransform();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float MaxWalkSpeed = 0.f;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void SightTransformChanged();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	ECWRMovementMode MovementMode = ECWRMovementMode::Walking;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	bool bWantsToRun = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	float WeaponMoveDownAlpha = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	float Lean = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	float LeanHands = 0.f;
+
+	void LowerWeapon();
+
+	void UpdateWeaponParameters();
 	
 private:
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USceneComponent> FP_Base;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USpringArmComponent> CB_MeshRoot;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USceneComponent> FP_Offset;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> Mesh1P;
+	TObjectPtr<UCapsuleComponent> SupressedRadius;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USpringArmComponent> CB_Camera;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> Camera1P;
+	TObjectPtr<USplineComponent> ProjectilePredictionSpline;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCWRPawnExtensionComponent> PawnExtensionComponent;
@@ -342,9 +482,6 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCWRHealthComponent> HealthComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
-	FName Socket1P = "Camera";
 	
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_ReplicatedAcceleration)
 	FCWRReplicatedAcceleration ReplicatedAcceleration;
@@ -366,12 +503,24 @@ protected:
 	}
 
 private:
+
+	void LocalEnterAiming();	
+	void LocalExitAiming();	
+	
+	UFUNCTION(Client, Unreliable)
+	void ROC_ADSFX();
 	
 	UFUNCTION()
 	void OnControllerChangedTeam(UObject* TeamAgent, int32 OldTeam, int32 NewTeam);
 
 	UFUNCTION()
 	void OnRep_ReplicatedAcceleration();
+
+	UFUNCTION()
+	void OnRep_bFiring();
+	
+	UFUNCTION()
+	void OnRep_CurrentWeapon();
 
 	UFUNCTION()
 	void OnRep_MyTeamID(FGenericTeamId OldTeamID);

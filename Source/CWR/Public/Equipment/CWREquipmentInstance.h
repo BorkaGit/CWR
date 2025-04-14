@@ -8,6 +8,7 @@
 #include "CWREquipmentInstance.generated.h"
 
 
+class ACWRCharacter_Base;
 class UCWRAbilitySystemComponent;
 class UGameplayAbility;
 struct FGameplayAbilitySpecHandle;
@@ -44,7 +45,7 @@ public:
 	APawn* GetPawn() const;
 
 	UFUNCTION(BlueprintPure, Category=Equipment)
-	ACWRCharacter_Player* GetCWRCharacter() const;
+	ACWRCharacter_Base* GetCWRCharacter() const;
 
 	
 

@@ -63,11 +63,22 @@ const UCWRPawnData* ACWRGameMode::GetPawnDataForController(const AController* In
 	if (ExperienceComponent->IsExperienceLoaded())
 	{
 		const UCWRExperienceDefinition* Experience = ExperienceComponent->GetCurrentExperienceChecked();
+
+		if (!InController->IsPlayerController() && Experience->BotPawnData)
+		{
+			return Experience->BotPawnData;
+		}
+		
 		if (Experience->DefaultPawnData != nullptr)
 		{
 			return Experience->DefaultPawnData;
 		}
 
+		if (!InController->IsPlayerController())
+		{
+			return UCWRAssetManager::Get().GetBotPawnData();
+		}
+		
 		// Experience is loaded and there's still no pawn data, fall back to the default for now
 		return UCWRAssetManager::Get().GetDefaultPawnData();
 	}

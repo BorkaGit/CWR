@@ -9,45 +9,58 @@
 #include "AbilitySystem/CWRAbilitySystemComponent.h"
 #include "AbilitySystem/CWRAttributeSet.h"
 #include "Character/CWRCharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Player/CWRPlayerController.h"
 #include "Player/CWRPlayerState.h"
 #include "UI/HUD/CWRHUD.h"
+#include "Weapons/CWRDroppedMagazineActor.h"
 #include "Weapons/CWRRangedWeaponInstance.h"
+#include "Weapons/CWRWeaponActor.h"
 #include "Weapons/CWRWeaponInstance.h"
 
 
-ACWRCharacter_Player::ACWRCharacter_Player(FObjectInitializer const& ObjectInitializer) : Super(
-	ObjectInitializer
-		.SetDefaultSubobjectClass<UCWRCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)
-	)
+ACWRCharacter_Player::ACWRCharacter_Player(FObjectInitializer const& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
-
-/*
-	SpringArmFP = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmFP"));
-	SpringArmFP->SetupAttachment(GetMesh(), FPSpringArmSocketName);
-	SpringArmFP->TargetArmLength = 0.f;
-
-	CameraFP = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraFP"));
-	CameraFP->SetupAttachment(SpringArmFP);*/
-	
-	/*
-	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
-	CameraComponent->bUsePawnControlRotation = true;
-	CameraComponent->SetupAttachment(GetCapsuleComponent());
-	
-	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
-	ArmsMesh->SetupAttachment(CameraComponent);
-	ArmsMesh->SetOnlyOwnerSee(true);
-	ArmsMesh->CastShadow = false;
-	ArmsMesh->bCastHiddenShadow = false;*/
-
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 	
+	FP_Legs = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Legs"));
+	FP_Legs->SetupAttachment(GetCapsuleComponent());
+	FP_Legs->SetCastShadow(false);
+	FP_Legs->SetOnlyOwnerSee(true);
+
+	FP_Base = CreateDefaultSubobject<USceneComponent>(TEXT("FP_Base"));
+	FP_Base->SetupAttachment(GetCapsuleComponent());
+
+	CB_MeshRoot = CreateDefaultSubobject<USpringArmComponent>(TEXT("CB_MeshRoot"));
+	CB_MeshRoot->TargetArmLength = 0.f;
+	CB_MeshRoot->bDoCollisionTest = false;
+	CB_MeshRoot->bUsePawnControlRotation = true;
+	CB_MeshRoot->bInheritRoll = false;
+	CB_MeshRoot->SetupAttachment(FP_Base);
+
+	FP_Offset = CreateDefaultSubobject<USceneComponent>(TEXT("FP_Offset"));
+	FP_Offset->SetupAttachment(CB_MeshRoot);
+
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
+	Mesh1P->SetOnlyOwnerSee(true);
+	Mesh1P->SetCastShadow(false);
+	Mesh1P->SetupAttachment(FP_Offset);
+
+	CB_Camera = CreateDefaultSubobject<USpringArmComponent>(TEXT("CB_Camera"));
+	CB_Camera->TargetArmLength = 0.f;
+	CB_Camera->bDoCollisionTest = false;
+	CB_Camera->bUsePawnControlRotation = true;
+	CB_Camera->bInheritRoll = false;
+	CB_Camera->SetupAttachment(Mesh1P, Socket1P);
+
+	Camera1P = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera1P"));
+	Camera1P->bUsePawnControlRotation = true;
+	Camera1P->SetupAttachment(CB_Camera);
 }
 
 void ACWRCharacter_Player::PossessedBy(AController* NewController)
@@ -56,6 +69,13 @@ void ACWRCharacter_Player::PossessedBy(AController* NewController)
 
 	// Init ability actor info for the Server
 	//InitAbilityActorInfo();
+}
+
+void ACWRCharacter_Player::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACWRCharacter_Player, SightTransform);
 }
 
 void ACWRCharacter_Player::OnRep_PlayerState()
@@ -100,61 +120,40 @@ void ACWRCharacter_Player::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gamepl
 	Super::ApplyEffectToSelf(GameplayEffectClass, Level);
 }
 
+void ACWRCharacter_Player::OnRep_SightTransform()
+{
+	SightTransformChanged();
+}
+
+void ACWRCharacter_Player::ROC_SpawnMag_Implementation()
+{
+	if ( CurrentWeapon )
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.bDeferConstruction = true;
+	
+		ACWRDroppedMagazineActor* DroppedMagazineActor = GetWorld()->SpawnActor<ACWRDroppedMagazineActor>(ACWRDroppedMagazineActor::StaticClass(),Mesh1P->GetSocketTransform("hand_l"),SpawnParameters );
+		DroppedMagazineActor->SetMagazineMesh(CurrentWeapon->GetDroppedMagazineMesh());
+		DroppedMagazineActor->SetMagazineDropSound(CurrentWeapon->GetMagazineDropSound());
+		DroppedMagazineActor->SetMagazineDropSoundAttenuation(CurrentWeapon->GetMagazineDropSoundAttenuation());
+		DroppedMagazineActor->FinishSpawning(Mesh1P->GetSocketTransform("hand_l"), false, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);;
+	}
+}
+
 void ACWRCharacter_Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FP_Legs->HideBoneByName("spine_03",PBO_None);
 }
 
 void ACWRCharacter_Player::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	/*
-	if (MoveAction)	
-	{
-		const FVector2d SideMovVector = EnhancedInputComponent->BindActionValue(MoveAction).GetValue().Get<FVector2d>();
-		const double SideMovClamped = FMath::GetMappedRangeValueClamped(FVector2d(-1.f,1.f), FVector2d(-10.f, 10.f), SideMovVector.X);
-		HandSwayRotator.Pitch = FMath::FInterpTo(HandSwayRotator.Pitch, SideMovClamped, DeltaSeconds, 5.f);
-	}
-	if (LookAction)
-	{
-		const FVector2d MouseVector = EnhancedInputComponent->BindActionValue(LookAction).GetValue().Get<FVector2d>();
-		const double MouseVectorXClamped = FMath::GetMappedRangeValueClamped(FVector2d(-1.f,1.f), FVector2d(-10.f, 10.f), MouseVector.X);
-		HandSwayRotator.Yaw = FMath::FInterpTo(HandSwayRotator.Yaw, MouseVectorXClamped, DeltaSeconds, 5.f);
-
-		const double MouseVectorYClamped = FMath::GetMappedRangeValueClamped(FVector2d(1.f,-1.f), FVector2d(-10.f, 10.f), MouseVector.Y);
-		HandSwayRotator.Roll = FMath::FInterpTo(HandSwayRotator.Roll, MouseVectorYClamped, DeltaSeconds, 5.f);
-		
-	}*/
-
-	if (bIsAiming)
-	{
-		/*
-		AimCurrent = FMath::FInterpTo(AimCurrent, AimTarget, DeltaSeconds, 14.f);
-		const FVector NewLocation =  FMath::Lerp(FVector::ZeroVector,Cast<UCWRRangedWeaponInstance>(GetItemInHands())->GetAimOffsetLocation(), AimCurrent );
-		
-		SpringArmFP->SetRelativeLocation(NewLocation);*/
-	}
-}
-
-void ACWRCharacter_Player::DropItem()
-{
-	Super::DropItem();
-}
-
-void ACWRCharacter_Player::ControllerRecoil_Implementation(float RecoilAmount)
-{
 	
 }
 
-FVector ACWRCharacter_Player::GetCameraLocation() const
-{
-	return CameraFP->GetComponentLocation();
-}
 
-FVector ACWRCharacter_Player::GetCameraEndTraceLocation(const float Distance) const
-{
-	return GetCameraLocation() + Distance * CameraFP->GetForwardVector();
-}
 
 
 

@@ -64,9 +64,9 @@ APawn* UCWREquipmentInstance::GetPawn() const
 	return Cast<APawn>(GetOuter());
 }
 
-ACWRCharacter_Player* UCWREquipmentInstance::GetCWRCharacter() const
+ACWRCharacter_Base* UCWREquipmentInstance::GetCWRCharacter() const
 {
-	return Cast<ACWRCharacter_Player>(GetOuter());
+	return Cast<ACWRCharacter_Base>(GetOuter());
 }
 
 APawn* UCWREquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const
@@ -86,25 +86,18 @@ void UCWREquipmentInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActor
 {
 	if (APawn* OwningPawn = GetPawn())
 	{
-		USceneComponent* AttachTarget = OwningPawn->GetRootComponent();
 		if (ACWRCharacter_Base* CWRCharacter = Cast<ACWRCharacter_Base>(OwningPawn))
 		{
-			AttachTarget = CWRCharacter->GetMesh();
-
 			for (const FCWREquipmentActorToSpawn& SpawnInfo : ActorsToSpawn)
 			{
-				/*AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
-				NewActor->SetActorEnableCollision(false);
-				NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ //true);
-				/*NewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
-				NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfo.AttachSocket);*/
-
 				FActorSpawnParameters SpawnParameters;
 				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
 
+				const auto WeaponActor = Cast<ACWRWeaponActor>(NewActor);
+				
 				if (const auto RangedWeaponInstance = Cast<UCWRRangedWeaponInstance>(this) )
 				{
-					if (const auto WeaponActor = Cast<ACWRWeaponActor>(NewActor))
+					if (WeaponActor)
 					{
 						WeaponActor->SetAttachments(RangedWeaponInstance->GetAttachments());
 					}
@@ -112,7 +105,32 @@ void UCWREquipmentInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActor
 				
 				NewActor->FinishSpawning(FTransform::Identity, true);
 
-				CWRCharacter->AttachWeapon(NewActor);
+				if ( WeaponActor )
+				{
+
+					if (const ACWRCharacter_Player* PlayerCharacter = Cast<ACWRCharacter_Player>(CWRCharacter))
+					{
+						FAttachmentTransformRules FPAttachmentRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true );
+						WeaponActor->GetFPMesh()->AttachToComponent(PlayerCharacter->GetMesh1P(), FPAttachmentRules,WeaponActor->GetFPSocketAttach());
+					}
+
+					FAttachmentTransformRules TPAttachmentRules = FAttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, true );
+					WeaponActor->GetTPMesh()->AttachToComponent(CWRCharacter->GetMesh(), TPAttachmentRules, WeaponActor->GetTPSocketAttach());
+
+
+					CWRCharacter->UpdateRecoilParameters(WeaponActor);
+					CWRCharacter->SVR_UpdateDT(WeaponActor->GetAnimationSlot());
+
+					WeaponActor->CalculateSightTransform();
+					CWRCharacter->SetLengthOfWeapon(WeaponActor->GetLengthOfWeapon());
+					CWRCharacter->SetTimeFromAim(WeaponActor->GetAimOutSpeed());
+					CWRCharacter->SetTimeToAim(WeaponActor->GetAimInSpeed());
+					CWRCharacter->SetCycleSightSpeed(WeaponActor->GetCycleSightSpeed());
+					CWRCharacter->SetADSFov(WeaponActor->GetADSFov());
+					
+					CWRCharacter->SetCurrentWeapon(WeaponActor);
+					CWRCharacter->AttachWeapon(NewActor);
+				}
 				
 				SpawnedActors.Add(NewActor);
 			}

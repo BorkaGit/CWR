@@ -10,6 +10,7 @@
 #include "Character/CWRHealthComponent.h"
 #include "Character/CWRPawnExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SplineComponent.h"
 #include "Equipment/CWREquipmentManagerComponent.h"
 #include "Equipment/CWRQuickBarComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -22,6 +23,9 @@
 #include "Player/CWRPlayerController.h"
 #include "Player/CWRPlayerState.h"
 #include "Weapons/CWRRangedWeaponInstance.h"
+#include "Character/CWRPawnData.h"
+#include "Kismet/GameplayStatics.h"
+#include "Weapons/CWRWeaponActor.h"
 
 static FName NAME_CWRCharacterCollisionProfile_Capsule(TEXT("CWRPawnCapsule"));
 static FName NAME_CWRCharacterCollisionProfile_Mesh(TEXT("CWRPawnMesh"));
@@ -31,10 +35,11 @@ static FName NAME_RagdollImpulseBone(TEXT("Pelvis"));
 ACWRCharacter_Base::ACWRCharacter_Base(FObjectInitializer const& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCWRCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
-	// Avoid ticking characters if possible.
-	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	bReplicates = true;
+	
 	SetNetCullDistanceSquared(900000000.0f);
 
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
@@ -45,36 +50,17 @@ ACWRCharacter_Base::ACWRCharacter_Base(FObjectInitializer const& ObjectInitializ
 	check(MeshComp);
 	MeshComp->SetCollisionProfileName(NAME_CWRCharacterCollisionProfile_Mesh);
 
-	FP_Base = CreateDefaultSubobject<USceneComponent>(TEXT("FP_Base"));
-	FP_Base->SetupAttachment(CapsuleComp);
+	SupressedRadius = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SupressedRadius"));
+	SupressedRadius->SetupAttachment(CapsuleComp);
 
-	CB_MeshRoot = CreateDefaultSubobject<USpringArmComponent>(TEXT("CB_MeshRoot"));
-	CB_MeshRoot->TargetArmLength = 0.f;
-	CB_MeshRoot->bDoCollisionTest = false;
-	CB_MeshRoot->bUsePawnControlRotation = true;
-	CB_MeshRoot->bInheritRoll = false;
-	CB_MeshRoot->SetupAttachment(FP_Base);
-
-	FP_Offset = CreateDefaultSubobject<USceneComponent>(TEXT("FP_Offset"));
-	FP_Offset->SetupAttachment(CB_MeshRoot);
-
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetCastShadow(false);
-	Mesh1P->SetupAttachment(FP_Offset);
-
-	CB_Camera = CreateDefaultSubobject<USpringArmComponent>(TEXT("CB_Camera"));
-	CB_Camera->TargetArmLength = 0.f;
-	CB_Camera->bDoCollisionTest = false;
-	CB_Camera->bUsePawnControlRotation = true;
-	CB_Camera->bInheritRoll = false;
-	CB_Camera->SetupAttachment(Mesh1P, Socket1P);
-
-	Camera1P = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera1P"));
-	Camera1P->bUsePawnControlRotation = true;
-	Camera1P->SetupAttachment(CB_Camera);
+	ProjectilePredictionSpline = CreateDefaultSubobject<USplineComponent>(TEXT("ProjectilePredictionSpline"));
+	ProjectilePredictionSpline->SetupAttachment(CapsuleComp);
 	
+
 	auto CWRMovementComponent = CastChecked<UCWRCharacterMovementComponent>(GetCharacterMovement());
+	MaxWalkSpeed = CWRMovementComponent->MaxWalkSpeed;
+	
+	/*auto CWRMovementComponent = CastChecked<UCWRCharacterMovementComponent>(GetCharacterMovement());
 	CWRMovementComponent->GravityScale = 1.0f;
 	CWRMovementComponent->MaxAcceleration = 2400.0f;
 	CWRMovementComponent->BrakingFrictionFactor = 1.0f;
@@ -87,7 +73,7 @@ ACWRCharacter_Base::ACWRCharacter_Base(FObjectInitializer const& ObjectInitializ
 	CWRMovementComponent->bAllowPhysicsRotationDuringAnimRootMotion = false;
 	CWRMovementComponent->GetNavAgentPropertiesRef().bCanCrouch = true;
 	CWRMovementComponent->bCanWalkOffLedgesWhenCrouching = true;
-	CWRMovementComponent->SetCrouchedHalfHeight(65.0f);
+	CWRMovementComponent->SetCrouchedHalfHeight(65.0f);*/
 	
 	PawnExtensionComponent = CreateDefaultSubobject<UCWRPawnExtensionComponent>(TEXT("PawnExtensionComponent"));
 	PawnExtensionComponent->OnAbilitySystemInitialized_RegisterAndCall(FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
@@ -119,9 +105,17 @@ void ACWRCharacter_Base::PreInitializeComponents()
 void ACWRCharacter_Base::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+/*
 	if (GetCharacterMovement())
-		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;*/
+}
+
+void ACWRCharacter_Base::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	LowerWeapon();
 }
 
 void ACWRCharacter_Base::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -149,7 +143,7 @@ void ACWRCharacter_Base::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
 void ACWRCharacter_Base::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
 {
 	Super::PreReplication(ChangedPropertyTracker);
-
+/*
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
 	{
 		// Compress Acceleration: XY components as direction + magnitude, Z component as direct value
@@ -161,7 +155,7 @@ void ACWRCharacter_Base::PreReplication(IRepChangedPropertyTracker& ChangedPrope
 		ReplicatedAcceleration.AccelXYRadians   = FMath::FloorToInt((AccelXYRadians / TWO_PI) * 255.0);     // [0, 2PI] -> [0, 255]
 		ReplicatedAcceleration.AccelXYMagnitude = FMath::FloorToInt((AccelXYMagnitude / MaxAccel) * 255.0);	// [0, MaxAccel] -> [0, 255]
 		ReplicatedAcceleration.AccelZ           = FMath::FloorToInt((CurrentAccel.Z / MaxAccel) * 127.0);   // [-MaxAccel, MaxAccel] -> [-127, 127]
-	}
+	}*/
 }
 
 void ACWRCharacter_Base::NotifyControllerChanged()
@@ -206,6 +200,98 @@ UAbilitySystemComponent* ACWRCharacter_Base::GetAbilitySystemComponent() const
 	return PawnExtensionComponent->GetCWRAbilitySystemComponent();
 }
 
+void ACWRCharacter_Base::SVR_UpdateDT_Implementation(const FName WeaponSlot)
+{
+	MC_UpdateDT(WeaponSlot);
+}
+
+void ACWRCharacter_Base::MC_UpdateDT_Implementation(const FName WeaponSlot)
+{
+	OnUpdateDT.Broadcast(WeaponSlot);
+}
+
+void ACWRCharacter_Base::MC_PlayUnequipWeaponMontage_Implementation()
+{
+	if ( UGameplayStatics::GetPlayerPawn(this, 0) == this ) return;
+
+	if ( CurrentWeapon )
+	{
+		if ( UAnimInstance* TPAnimInstance = GetMesh()->GetAnimInstance() )
+		{
+			TPAnimInstance->Montage_Play(CurrentWeapon->GetTPMontage_UnequipWeapon());
+		}
+	}
+}
+
+void ACWRCharacter_Base::SVR_EnterAiming_Implementation()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed * 0.4f;
+	
+	MC_EnterAiming();
+	
+	if ( CurrentWeapon )
+	{
+		CurrentWeapon->EnableScope(true);
+	}
+}
+
+void ACWRCharacter_Base::MC_EnterAiming_Implementation()
+{
+	if ( IsLocallyControlled() ) return;
+
+	bIsAiming = true;
+
+	EnterAimingVFX();
+}
+
+void ACWRCharacter_Base::SVR_ExitAiming_Implementation()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	
+	MC_ExitAiming();
+
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->EnableScope(false);
+	}
+}
+
+void ACWRCharacter_Base::MC_ExitAiming_Implementation()
+{
+	bIsAiming = false;
+	ExitAimingVFX();
+}
+
+void ACWRCharacter_Base::SVR_PlayUnequipWeaponMontageTP_Implementation()
+{
+	MC_PlayUnequipWeaponMontage();
+}
+
+void ACWRCharacter_Base::SVR_UpdateCurrentWeapon_Implementation(ACWRWeaponActor* NewCurrentWeapon)
+{
+	CurrentWeapon = NewCurrentWeapon;
+}
+
+
+void ACWRCharacter_Base::SVR_Lean_Implementation(const float InLean)
+{
+	Lean = InLean;
+
+	bIsLeaning = Lean != 0;
+}
+void ACWRCharacter_Base::SVR_ArmsRotateLean_Implementation(const float InLeanHands)
+{
+	LeanHands = InLeanHands;
+}
+
+void ACWRCharacter_Base::SetFiringTP(const bool bInFiring)
+{
+	if ( bInFiring != bFiring)
+	{
+		bFiring = bInFiring;
+	}
+}
+
 void ACWRCharacter_Base::OnAbilitySystemInitialized()
 {
 	UCWRAbilitySystemComponent* CWRAbilitySystemComponent = GetCWRAbilitySystemComponent();
@@ -228,7 +314,7 @@ void ACWRCharacter_Base::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	PawnExtensionComponent->HandleControllerChanged();
-
+	
 	// Grab the current team ID and listen for future changes
 	if (ICWRTeamAgentInterface* ControllerAsTeamProvider = Cast<ICWRTeamAgentInterface>(NewController))
 	{
@@ -242,6 +328,20 @@ void ACWRCharacter_Base::PossessedBy(AController* NewController)
 		}
 	}
 	ConditionalBroadcastTeamChanged(this, OldTeamID, MyTeamID);
+
+	FTimerHandle UpdateAnimsetsTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(UpdateAnimsetsTimerHandle, FTimerDelegate::CreateLambda([this]()
+{	
+		if (CurrentWeapon)
+		{
+			SVR_UpdateDT(CurrentWeapon->GetAnimationSlot());
+		}
+}), 6.0f, true);
+
+	if (const auto PlayerController = Cast<APlayerController>(NewController))
+	{
+		PlayerController->SetViewTargetWithBlend(this);
+	}
 }
 
 void ACWRCharacter_Base::UnPossessed()
@@ -306,9 +406,9 @@ void ACWRCharacter_Base::InitializeGameplayTags()
 				CWRASC->SetLooseGameplayTagCount(TagMapping.Value, 0);
 			}
 		}*/
-
+/*
 		UCWRCharacterMovementComponent* CWRMoveComp = CastChecked<UCWRCharacterMovementComponent>(GetCharacterMovement());
-		SetMovementModeTag(CWRMoveComp->MovementMode, CWRMoveComp->CustomMovementMode, true);
+		SetMovementModeTag(CWRMoveComp->MovementMode, CWRMoveComp->CustomMovementMode, true);*/
 }
 
 void ACWRCharacter_Base::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
@@ -358,7 +458,7 @@ void ACWRCharacter_Base::OnDeathStarted(AActor* OwningActor)
 {
 	DisableMovementAndCollision();
 	
-	
+	check(!DeathMontages.IsEmpty())
 	UAnimMontage* RandomDeathMontage = DeathMontages[FMath::RandRange(0,DeathMontages.Num() - 1)];
 	PlayAnimMontage(RandomDeathMontage);
 
@@ -461,13 +561,13 @@ void ACWRCharacter_Base::OnMovementModeChanged(EMovementMode PrevMovementMode, u
 
 	UCWRCharacterMovementComponent* CWRMoveComp = CastChecked<UCWRCharacterMovementComponent>(GetCharacterMovement());
 
-	SetMovementModeTag(PrevMovementMode, PreviousCustomMode, false);
-	SetMovementModeTag(CWRMoveComp->MovementMode, CWRMoveComp->CustomMovementMode, true);
+//	SetMovementModeTag(PrevMovementMode, PreviousCustomMode, false);
+//	SetMovementModeTag(CWRMoveComp->MovementMode, CWRMoveComp->CustomMovementMode, true);
 }
 
-void ACWRCharacter_Base::SetMovementModeTag(EMovementMode MovementMode, uint8 CustomMovementMode, bool bTagEnabled)
+/*void ACWRCharacter_Base::SetMovementModeTag(EMovementMode MovementMode, uint8 CustomMovementMode, bool bTagEnabled)
 {
-	/*
+	
 	if (UCWRAbilitySystemComponent* CWRASC = GetCWRAbilitySystemComponent())
 	{
 		const FGameplayTag* MovementModeTag = nullptr;
@@ -484,8 +584,8 @@ void ACWRCharacter_Base::SetMovementModeTag(EMovementMode MovementMode, uint8 Cu
 		{
 			CWRASC->SetLooseGameplayTagCount(*MovementModeTag, (bTagEnabled ? 1 : 0));
 		}
-	}*/
-}
+	}
+}*/
 
 bool ACWRCharacter_Base::CanJumpInternal_Implementation() const
 {
@@ -494,7 +594,7 @@ bool ACWRCharacter_Base::CanJumpInternal_Implementation() const
 }
 
 void ACWRCharacter_Base::OnRep_ReplicatedAcceleration()
-{
+{/*
 	if (UCWRCharacterMovementComponent* CWRMovementComponent = Cast<UCWRCharacterMovementComponent>(GetCharacterMovement()))
 	{
 		// Decompress Acceleration
@@ -507,7 +607,29 @@ void ACWRCharacter_Base::OnRep_ReplicatedAcceleration()
 		UnpackedAcceleration.Z = double(ReplicatedAcceleration.AccelZ) * MaxAccel / 127.0; // [-127, 127] -> [-MaxAccel, MaxAccel]
 
 		CWRMovementComponent->SetReplicatedAcceleration(UnpackedAcceleration);
+	}*/
+}
+
+void ACWRCharacter_Base::OnRep_bFiring()
+{
+	UAnimMontage* TPFireWeapon = CurrentWeapon->GetTPMontage_FireWeapon();
+	
+	if (bFiring)
+	{
+		if ( UAnimInstance* TPAnimInstance = GetMesh()->GetAnimInstance() )
+		{
+			TPAnimInstance->Montage_Play(TPFireWeapon);
+		}
 	}
+	else
+	{
+		StopAnimMontage(TPFireWeapon);
+	}
+}
+
+void ACWRCharacter_Base::OnRep_CurrentWeapon()
+{
+	UpdateWeaponParameters();
 }
 
 void ACWRCharacter_Base::SetGenericTeamId(const FGenericTeamId& NewTeamID)
@@ -541,9 +663,53 @@ FOnCWRTeamIndexChangedDelegate* ACWRCharacter_Base::GetOnTeamIndexChangedDelegat
 	return &OnTeamChangedDelegate;
 }
 
-void ACWRCharacter_Base::OnRep_SightTransform()
+void ACWRCharacter_Base::LowerWeapon()
 {
-	SightTransformChanged();
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+	
+	const float TargetAlpha = (!bIsAiming && FMath::IsNearlyEqual(ForwardAxisValue, 1.f, 0.01f)) ? 1.f : 0.f;
+	const float InterpSpeed = (TargetAlpha == 1.f) ? 6.f : 4.f;
+
+	WeaponMoveDownAlpha = FMath::FInterpTo( WeaponMoveDownAlpha, TargetAlpha, GetWorld()->GetDeltaSeconds(), InterpSpeed
+	);
+}
+
+void ACWRCharacter_Base::UpdateWeaponParameters()
+{
+	if ( !CurrentWeapon  && (UGameplayStatics::GetPlayerPawn(GetWorld(), 0) != this) ) return;
+
+	SVR_UpdateDT(CurrentWeapon->GetAnimationSlot());
+	UpdateRecoilParameters(CurrentWeapon);
+
+	CycleSightSpeed = CurrentWeapon->GetCycleSightSpeed();
+	ADSFov = CurrentWeapon->GetADSFov();
+}
+
+void ACWRCharacter_Base::ROC_ADSFX_Implementation()
+{
+	UGameplayStatics::PlaySound2D(this,WeaponMoveSound);
+}
+
+void ACWRCharacter_Base::LocalEnterAiming()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed * 0.4f;
+
+	bIsAiming = true;
+	CurrentWeapon->SetIsAiming(bIsAiming);
+	TimeToAim = CurrentWeapon->GetAimInSpeed();
+
+	EnterAimingVFX();
+}
+
+void ACWRCharacter_Base::LocalExitAiming()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+
+	bIsAiming = false;
+	ExitAimingVFX();
 }
 
 void ACWRCharacter_Base::OnControllerChangedTeam(UObject* TeamAgent, int32 OldTeam, int32 NewTeam)
@@ -750,6 +916,26 @@ void ACWRCharacter_Base::AddInitialInventory()
 		QuickBar->SetActiveSlotIndex(QuickBar->FindBestPrioritySlotIndex());
 }
 
+void ACWRCharacter_Base::EnterAiming()
+{
+	MovementMode = ECWRMovementMode::Aiming;
+
+	ROC_ADSFX();
+	SVR_EnterAiming();
+	LocalEnterAiming();
+}
+
+void ACWRCharacter_Base::ExitAiming()
+{
+	MovementMode = bWantsToRun ? ECWRMovementMode::Sprinting : ECWRMovementMode::Walking;
+	
+	ROC_ADSFX();
+
+	SVR_ExitAiming();
+
+	LocalExitAiming();
+}
+
 void ACWRCharacter_Base::PickUpItem(TSubclassOf<UCWRInventoryItemDefinition> ItemDefinition)
 {
 	if ( !HasAuthority() || !IsValid(GetController()) ) return;
@@ -774,6 +960,19 @@ void ACWRCharacter_Base::PickUpItem(TSubclassOf<UCWRInventoryItemDefinition> Ite
 	
 	QuickBar->AddItemToSlot(ItemSlot, ItemInstance);
 	QuickBar->SetActiveSlotIndex(QuickBar->FindBestPrioritySlotIndex());
+}
+
+void ACWRCharacter_Base::UpdateRecoilParameters_Implementation(ACWRWeaponActor* TargetWeapon)
+{
+	if (TargetWeapon)
+	{
+		PitchRecoilCurve = TargetWeapon->GetPitchRecoilCurve();
+		YawRecoilCurve = TargetWeapon->GetYawRecoilCurve();
+		HipFireCurveRecoilMultiplier = TargetWeapon->GetHipFireRecoilCurveMultiplier();
+		RecoilRecoverSpeed = TargetWeapon->GetRecoilRecoverSpeed();
+		HipFireRecoilLocationMultiplier = TargetWeapon->GetHipFireRecoilLocationMultiplier();
+		HipFireRecoilRotationMultiplier = TargetWeapon->GetHipFireRecoilRotationMultiplier();
+	}
 }
 
 void ACWRCharacter_Base::PreCMCTick_Implementation()

@@ -29,8 +29,13 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<ACWRAIController> CWRAIController = nullptr;
-	
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float DefaultWalkSpeed = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RecoilControl = 0.3f;
+	
 private:
 
 	UPROPERTY(Transient)

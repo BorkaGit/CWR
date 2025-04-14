@@ -6,12 +6,14 @@
 #include "AI/CWRAIController.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/CWRCharacterMovementComponent.h"
 
 
 ACWRCharacter_AI::ACWRCharacter_AI(FObjectInitializer const& ObjectInitializer): Super(
 	ObjectInitializer )
 {
-	
+	auto CWRMovementComponent = CastChecked<UCWRCharacterMovementComponent>(GetCharacterMovement());
+	DefaultWalkSpeed = CWRMovementComponent->MaxWalkSpeed;
 }
 
 void ACWRCharacter_AI::PossessedBy(AController* NewController)
@@ -19,8 +21,8 @@ void ACWRCharacter_AI::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	CWRAIController = Cast<ACWRAIController>(NewController);
-
+/*
 	BlackboardComponent = CWRAIController->GetBlackboardComponent();
 	BlackboardComponent->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
-	CWRAIController->RunBehaviorTree(BehaviorTree);
+	CWRAIController->RunBehaviorTree(BehaviorTree);*/
 }

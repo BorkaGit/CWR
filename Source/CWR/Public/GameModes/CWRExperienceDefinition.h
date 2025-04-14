@@ -42,6 +42,9 @@ public:
 	//@TODO: Make soft?
 	UPROPERTY(EditDefaultsOnly, Category=Gameplay)
 	TObjectPtr<const UCWRPawnData> DefaultPawnData;
+	
+	UPROPERTY(EditDefaultsOnly, Category=Gameplay)
+	TObjectPtr<const UCWRPawnData> BotPawnData;
 
 	// List of actions to perform as this experience is loaded/activated/deactivated/unloaded
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="Actions")

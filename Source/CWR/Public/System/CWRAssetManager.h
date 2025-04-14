@@ -51,6 +51,7 @@ public:
 
 	const UCWRGameData& GetGameData();
 	const UCWRPawnData* GetDefaultPawnData() const;
+	const UCWRPawnData* GetBotPawnData() const;
 	
 protected:
 	template <typename GameDataClass>
@@ -94,6 +95,9 @@ protected:
 	// Pawn data used when spawning player pawns if there isn't one set on the player state.
 	UPROPERTY(Config)
 	TSoftObjectPtr<UCWRPawnData> DefaultPawnData;
+
+	UPROPERTY(Config)
+	TSoftObjectPtr<UCWRPawnData> BotPawnData;
 
 private:
 	// Flushes the StartupJobs array. Processes all startup work.

@@ -29,6 +29,16 @@ class CWR_API ACWRAttachmentActor : public AActor
 public:	
 	ACWRAttachmentActor();
 
+	FORCEINLINE void SetVisibility	( const bool bInVisibility )	{ bVisibility = bInVisibility; }
+	FORCEINLINE void SetTP			( const bool bInTP )			{ bTP = bInTP; }
+	FORCEINLINE void SetFP			( const bool bInFP )			{ bFP = bInFP; }
+	FORCEINLINE void SetEnabled     ( const bool bInEnabled )       { bEnabled = bInEnabled; }
+	
+	FORCEINLINE bool IsAttachmentToggleable() const { return AttachmentToggleable; }
+	FORCEINLINE TArray<FCWRActualAimInfo> GetSight() const { return Sight; }
+	FORCEINLINE TArray<FCWRActualAimInfo> GetFrontSight() const { return FrontSight; }
+	FORCEINLINE TArray<FCWRActualAimInfo> GetRearSight() const { return RearSight; }
+		
 protected:
 	virtual void BeginPlay() override;
 	

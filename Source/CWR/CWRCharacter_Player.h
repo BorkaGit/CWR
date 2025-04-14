@@ -33,8 +33,18 @@ public:
 	
 	virtual void PossessedBy(AController* NewController) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	virtual void OnRep_PlayerState() override;
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SightTransformChanged();
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetSightTransform(const FTransform InSightTransform ) {  SightTransform = InSightTransform; }
+
+	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	
 protected:
 
 	virtual void BeginPlay() override;
@@ -45,35 +55,39 @@ protected:
 
 	virtual void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const override;
 
-public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_SightTransform)
+	FTransform SightTransform = FTransform::Identity;
 	
-	virtual void DropItem() override;
-	
-	UFUNCTION(BlueprintNativeEvent)
-	void ControllerRecoil(float RecoilAmount);
+	UFUNCTION(BlueprintCallable, Client, Unreliable)
+	void ROC_SpawnMag();
 
-	FVector GetCameraLocation() const;
-	FVector GetCameraEndTraceLocation(float Distance) const;
-
-protected:
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<USpringArmComponent> SpringArmFP;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UCameraComponent> CameraFP;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sockets")
-	FName FPSpringArmSocketName = "head";
-	
-	UPROPERTY(Transient, BlueprintReadOnly)
-	FRotator HandSwayRotator = FRotator::ZeroRotator;
+	UFUNCTION()
+	void OnRep_SightTransform();
 	
 private:
-	
-	float AimCurrent = 0.f;
 
-	UPROPERTY(Transient, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	float AimTarget = 0.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> FP_Legs;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> FP_Base;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USpringArmComponent> CB_MeshRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> FP_Offset;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> Mesh1P;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USpringArmComponent> CB_Camera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCameraComponent> Camera1P;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CWR|Character", Meta = (AllowPrivateAccess = "true"))
+	FName Socket1P = "Camera";
 };
 

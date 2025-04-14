@@ -28,6 +28,7 @@ static FAutoConsoleCommand CVarDumpLoadedAssets(
 UCWRAssetManager::UCWRAssetManager()
 {
 	DefaultPawnData = nullptr;
+	BotPawnData = nullptr;
 }
 
 UCWRAssetManager& UCWRAssetManager::Get()
@@ -128,6 +129,11 @@ const UCWRGameData& UCWRAssetManager::GetGameData()
 const UCWRPawnData* UCWRAssetManager::GetDefaultPawnData() const
 {
 	return GetAsset(DefaultPawnData);
+}
+
+const UCWRPawnData* UCWRAssetManager::GetBotPawnData() const
+{
+	return GetAsset(BotPawnData);
 }
 
 UPrimaryDataAsset* UCWRAssetManager::LoadGameDataOfClass(TSubclassOf<UPrimaryDataAsset> DataClass, const TSoftObjectPtr<UPrimaryDataAsset>& DataClassPath, FPrimaryAssetType PrimaryAssetType)
