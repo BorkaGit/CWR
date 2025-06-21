@@ -2,7 +2,7 @@
 
 #include "CWRCharacter_Player.h"
 
-#include "AkComponent.h"
+//#include "AkComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"

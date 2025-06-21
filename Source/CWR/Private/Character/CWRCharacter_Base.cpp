@@ -15,6 +15,7 @@
 #include "Equipment/CWRQuickBarComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Inventory/CWRInventoryItemDefinition.h"
+#include "Inventory/CWRInventoryItemInstance.h"
 #include "Inventory/CWRInventoryManagerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -25,6 +26,7 @@
 #include "Weapons/CWRRangedWeaponInstance.h"
 #include "Character/CWRPawnData.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/CWRGameInstance.h"
 #include "Weapons/CWRWeaponActor.h"
 
 static FName NAME_CWRCharacterCollisionProfile_Capsule(TEXT("CWRPawnCapsule"));
@@ -905,11 +907,13 @@ void ACWRCharacter_Base::AddInitialInventory()
 
 	if ( !IsValid(InventoryManager) || !IsValid(QuickBar) ) return;
 
+	TArray<TObjectPtr<UCWRInventoryItemInstance>> InitialInventoryItems = Cast<UCWRGameInstance>(GetGameInstance())->GetInitialInventoryItems();
+	
 	for ( int32 i = 0; i < InitialInventoryItems.Num(); ++i )
 	{
-		UCWRInventoryItemInstance* ItemInstance = InventoryManager->AddItemDefinition(InitialInventoryItems[i], 1);
-		const int32 ItemSlot = QuickBar->FindSlotIndex(InitialInventoryItems[i]);
-		QuickBar->AddItemToSlot(ItemSlot, ItemInstance);
+		InventoryManager->AddItemInstance(InitialInventoryItems[i]);
+		const int32 ItemSlot = QuickBar->FindSlotIndex(InitialInventoryItems[i]->GetItemDef());
+		QuickBar->AddItemToSlot(ItemSlot, InitialInventoryItems[i]);
 	}
 
 	if ( !InitialInventoryItems.IsEmpty() )

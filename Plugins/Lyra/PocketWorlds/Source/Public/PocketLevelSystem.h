@@ -2,21 +2,22 @@
 
 #pragma once
 
-#include "Subsystems/LocalPlayerSubsystem.h"
 #include "Subsystems/WorldSubsystem.h"
 
 #include "PocketLevelSystem.generated.h"
 
-class UPocketLevel;
+#define UE_API POCKETWORLDS_API
+
 class ULocalPlayer;
-class ULevelStreamingDynamic;
+class UObject;
+class UPocketLevel;
 class UPocketLevelInstance;
 
 /**
  *
  */
-UCLASS()
-class POCKETWORLDS_API UPocketLevelSubsystem : public UWorldSubsystem
+UCLASS(MinimalAPI)
+class UPocketLevelSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -24,9 +25,11 @@ public:
 	/**
 	 * 
 	 */
-	UPocketLevelInstance* GetOrCreatePocketLevelFor(ULocalPlayer* LocalPlayer, UPocketLevel* PocketLevel, FVector DesiredSpawnPoint);
+	UE_API UPocketLevelInstance* GetOrCreatePocketLevelFor(ULocalPlayer* LocalPlayer, UPocketLevel* PocketLevel, FVector DesiredSpawnPoint);
 
 private:
 	UPROPERTY()
-	TArray<UPocketLevelInstance*> PocketInstances;
+	TArray<TObjectPtr<UPocketLevelInstance>> PocketInstances;
 };
+
+#undef UE_API

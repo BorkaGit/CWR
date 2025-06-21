@@ -20,18 +20,18 @@ class CWR_API UCWRDevelopmentStatics : public UBlueprintFunctionLibrary
 	
 public:
 	// Should game logic skip directly to gameplay (skipping any match warmup / waiting for players / etc... aspects)
-	// Will always return false except when playing in the editor and bTestFullGameFlowInPIE (in Lyra Developer Settings) is false
-	UFUNCTION(BlueprintCallable, Category="Lyra")
+	// Will always return false except when playing in the editor and bTestFullGameFlowInPIE (in CWR Developer Settings) is false
+	UFUNCTION(BlueprintCallable, Category="CWR")
 	static bool ShouldSkipDirectlyToGameplay();
 
 	// Should game logic load cosmetic backgrounds in the editor?
-	// Will always return true except when playing in the editor and bSkipLoadingCosmeticBackgroundsInPIE (in Lyra Developer Settings) is true
-	UFUNCTION(BlueprintCallable, Category = "Lyra", meta=(ExpandBoolAsExecs="ReturnValue"))
+	// Will always return true except when playing in the editor and bSkipLoadingCosmeticBackgroundsInPIE (in CWR Developer Settings) is true
+	UFUNCTION(BlueprintCallable, Category = "CWR", meta=(ExpandBoolAsExecs="ReturnValue"))
 	static bool ShouldLoadCosmeticBackgrounds();
 
 	// Should game logic load cosmetic backgrounds in the editor?
-	// Will always return true except when playing in the editor and bSkipLoadingCosmeticBackgroundsInPIE (in Lyra Developer Settings) is true
-	UFUNCTION(BlueprintCallable, Category = "Lyra")
+	// Will always return true except when playing in the editor and bSkipLoadingCosmeticBackgroundsInPIE (in CWR Developer Settings) is true
+	UFUNCTION(BlueprintCallable, Category = "CWR")
 	static bool CanPlayerBotsAttack();
 
 	// Finds the most appropriate play-in-editor world to run 'server' cheats on

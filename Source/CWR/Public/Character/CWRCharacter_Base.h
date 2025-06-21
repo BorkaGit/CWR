@@ -432,8 +432,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultBaseAttributes;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TArray<TSubclassOf<UCWRInventoryItemDefinition>> InitialInventoryItems;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	//TArray<TSubclassOf<UCWRInventoryItemDefinition>> InitialInventoryItems;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;

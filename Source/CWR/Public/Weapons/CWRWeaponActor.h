@@ -5,6 +5,7 @@
 #include "CWRRangedWeaponInstance.h"
 #include "Character/InteractionInterface.h"
 #include "GameFramework/Actor.h"
+#include "Inventory/CWRInventoryItemInstance.h"
 #include "CWRWeaponActor.generated.h" 
 
 class ACWRCharacter_Base;
@@ -68,8 +69,8 @@ class CWR_API ACWRWeaponActor : public AActor, public IInteractionInterface
 public:	
 	ACWRWeaponActor();
 	
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE UAkComponent* GetAkComponent() const { return AkComponent; }
+	//UFUNCTION(BlueprintCallable)
+	//FORCEINLINE UAkComponent* GetAkComponent() const { return AkComponent; }
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE USkeletalMeshComponent* GetFPMesh() const { return FPMesh; }
@@ -245,8 +246,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName  MagazineSocketName = "MagazineSocket";
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAkAudioEvent> FireSound = nullptr;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	//TObjectPtr<UAkAudioEvent> FireSound = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UNiagaraSystem> MuzzleFireNiagara;
@@ -586,8 +587,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UArrowComponent> FPShellEject = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAkComponent> AkComponent = nullptr;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//TObjectPtr<UAkComponent> AkComponent = nullptr;
 
 	bool bSetRecoilMagnificationFired = false;
 };

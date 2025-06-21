@@ -16,7 +16,7 @@ class CWR_API UInventoryFragment_EquippableItem : public UCWRInventoryItemFragme
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, Category=CWR)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly , Category=CWR)
 	TSubclassOf<UCWREquipmentDefinition> EquipmentDefinition;
 	
 	

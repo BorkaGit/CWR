@@ -6,6 +6,7 @@
 
 #include "CWRGameInstance.generated.h"
 
+class UCWRInventoryItemInstance;
 class ACWRPlayerController;
 class UObject;
 
@@ -19,6 +20,8 @@ public:
 	UCWRGameInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	ACWRPlayerController* GetPrimaryPlayerController() const;
+
+	FORCEINLINE TArray<TObjectPtr<UCWRInventoryItemInstance>> GetInitialInventoryItems() const { return InitialInventoryItems; } 
 	
 	virtual bool CanJoinRequestedSession() const override;
 	virtual void HandlerUserInitialized(const UCommonUserInfo* UserInfo, bool bSuccess, FText Error, ECommonUserPrivilege RequestedPrivilege, ECommonUserOnlineContext OnlineContext) override;
@@ -35,4 +38,7 @@ protected:
 
 	/** A hard-coded encryption key used to try out the encryption code. This is NOT SECURE, do not use this technique in production! */
 	TArray<uint8> DebugTestEncryptionKey;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<TObjectPtr<UCWRInventoryItemInstance>> InitialInventoryItems;
 };

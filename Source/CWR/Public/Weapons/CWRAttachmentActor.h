@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "Inventory/CWRInventoryItemInstance.h"
 
 #include "CWRAttachmentActor.generated.h"
 
@@ -41,6 +42,9 @@ public:
 		
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> MeshComponent;
 	
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn="true"))
 	bool bVisibility = false;
@@ -65,5 +69,8 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FCWRActualAimInfo> RearSight;
+
+	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn="true"))
+	FCWRAttachmentInfo AttachmentInfo;
 	
 };

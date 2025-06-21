@@ -24,6 +24,7 @@ class UCWRInventoryItemFragment : public UObject
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	virtual void OnInstanceCreated(UCWRInventoryItemInstance* Instance) const {}
 };
 

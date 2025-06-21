@@ -41,9 +41,9 @@ class CWR_API UCWREquipmentDefinition : public UObject
 	
 public:
 	UCWREquipmentDefinition(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
+	
 	// Class to spawn
-	UPROPERTY(EditDefaultsOnly, Category=Equipment)
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category=Equipment)
 	TSubclassOf<UCWREquipmentInstance> InstanceType;
 
 	// Gameplay ability sets to grant when this is equipped

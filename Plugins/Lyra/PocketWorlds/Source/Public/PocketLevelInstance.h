@@ -2,58 +2,66 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Math/BoxSphereBounds.h"
+
+#include "UObject/ObjectPtr.h"
 #include "PocketLevelInstance.generated.h"
 
-class UPocketLevel;
-class ULocalPlayer;
+#define UE_API POCKETWORLDS_API
+
+class UPocketLevelSubsystem;
+
 class ULevelStreamingDynamic;
+class ULocalPlayer;
+class UPocketLevel;
 class UPocketLevelInstance;
+class UWorld;
+struct FFrame;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FPocketLevelInstanceEvent, UPocketLevelInstance*);
 
 /**
  *
  */
-UCLASS(Within = PocketLevelSubsystem, BlueprintType)
-class POCKETWORLDS_API UPocketLevelInstance : public UObject
+UCLASS(MinimalAPI, Within = PocketLevelSubsystem, BlueprintType)
+class UPocketLevelInstance : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UPocketLevelInstance();
+	UE_API UPocketLevelInstance();
 
-	virtual void BeginDestroy() override;
+	UE_API virtual void BeginDestroy() override;
 
-	void StreamIn();
-	void StreamOut();
+	UE_API void StreamIn();
+	UE_API void StreamOut();
 
-	FDelegateHandle AddReadyCallback(FPocketLevelInstanceEvent::FDelegate Callback);
-	void RemoveReadyCallback(FDelegateHandle CallbackToRemove);
+	UE_API FDelegateHandle AddReadyCallback(FPocketLevelInstanceEvent::FDelegate Callback);
+	UE_API void RemoveReadyCallback(FDelegateHandle CallbackToRemove);
 
 	virtual class UWorld* GetWorld() const override { return World; }
 
 private:
-	bool Initialize(ULocalPlayer* LocalPlayer, UPocketLevel* PocketLevel, FVector SpawnPoint);
+	UE_API bool Initialize(ULocalPlayer* LocalPlayer, UPocketLevel* PocketLevel, FVector SpawnPoint);
 
 	UFUNCTION()
-	void HandlePocketLevelLoaded();
+	UE_API void HandlePocketLevelLoaded();
 
 	UFUNCTION()
-	void HandlePocketLevelShown();
+	UE_API void HandlePocketLevelShown();
 
 private:
 	UPROPERTY()
-	ULocalPlayer* LocalPlayer;
+	TObjectPtr<ULocalPlayer> LocalPlayer;
 
 	UPROPERTY()
-	UPocketLevel* PocketLevel;
+	TObjectPtr<UPocketLevel> PocketLevel;
 
 	UPROPERTY()
-	UWorld* World;
+	TObjectPtr<UWorld> World;
 
 	UPROPERTY()
-	ULevelStreamingDynamic* StreamingPocketLevel;
+	TObjectPtr<ULevelStreamingDynamic> StreamingPocketLevel;
 
 	FPocketLevelInstanceEvent OnReadyEvent;
 
@@ -61,3 +69,5 @@ private:
 
 	friend class UPocketLevelSubsystem;
 };
+
+#undef UE_API

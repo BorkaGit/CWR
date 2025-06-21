@@ -2,38 +2,44 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Subsystems/WorldSubsystem.h"
+
 #include "PocketCaptureSubsystem.generated.h"
 
-class ULevel;
-class UWorld;
+#define UE_API POCKETWORLDS_API
 
-UCLASS(BlueprintType)
-class POCKETWORLDS_API UPocketCaptureSubsystem : public UWorldSubsystem
+template <typename T> class TSubclassOf;
+
+class FSubsystemCollectionBase;
+class UObject;
+class UPocketCapture;
+class UPrimitiveComponent;
+struct FFrame;
+
+UCLASS(MinimalAPI, BlueprintType)
+class UPocketCaptureSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	UPocketCaptureSubsystem();
+	UE_API UPocketCaptureSubsystem();
 
 	// Begin USubsystem
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
+	UE_API virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	UE_API virtual void Deinitialize() override;
 	// End USubsystem
 
 	UFUNCTION(BlueprintCallable, meta = (DeterminesOutputType = "PocketCaptureClass"))
-	UPocketCapture* CreateThumbnailRenderer(TSubclassOf<UPocketCapture> PocketCaptureClass);
+	UE_API UPocketCapture* CreateThumbnailRenderer(TSubclassOf<UPocketCapture> PocketCaptureClass);
 
 	UFUNCTION(BlueprintCallable)
-	void DestroyThumbnailRenderer(UPocketCapture* ThumbnailRenderer);
+	UE_API void DestroyThumbnailRenderer(UPocketCapture* ThumbnailRenderer);
 
-	void StreamThisFrame(TArray<UPrimitiveComponent*>& PrimitiveComponents);
+	UE_API void StreamThisFrame(TArray<UPrimitiveComponent*>& PrimitiveComponents);
 
 protected:
-	bool Tick(float DeltaTime);
+	UE_API bool Tick(float DeltaTime);
 
 	TArray<TWeakObjectPtr<UPrimitiveComponent>> StreamNextFrame;
 	TArray<TWeakObjectPtr<UPrimitiveComponent>> StreamedLastFrameButNotNext;
@@ -43,3 +49,5 @@ private:
 
 	FTSTicker::FDelegateHandle TickHandle;
 };
+
+#undef UE_API

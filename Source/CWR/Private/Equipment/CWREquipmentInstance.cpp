@@ -16,8 +16,10 @@
 #include "AbilitySystem/CWRAbilitySystemComponent.h"
 #include "AbilitySystem/CWRGameplayAbility.h"
 #include "CWR/CWRCharacter_Player.h"
+#include "Inventory/CWRInventoryItemInstance.h"
 #include "Weapons/CWRRangedWeaponInstance.h"
 #include "Weapons/CWRWeaponActor.h"
+#include "Weapons/InventoryFragment_SkeletalMesh.h"
 
 
 class FLifetimeProperty;
@@ -99,7 +101,16 @@ void UCWREquipmentInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActor
 				{
 					if (WeaponActor)
 					{
-						WeaponActor->SetAttachments(RangedWeaponInstance->GetAttachments());
+						if ( const auto CWRInventoryItemInstance = Cast<UCWRInventoryItemInstance>(GetInstigator()) )
+						{
+							if (const auto SkeletalMeshFragment = CWRInventoryItemInstance->FindFragmentByClass<UInventoryFragment_SkeletalMesh>() )
+							{
+								WeaponActor->GetFPMesh()->SetSkeletalMeshAsset(SkeletalMeshFragment->SkeletalMesh);
+								WeaponActor->GetTPMesh()->SetSkeletalMeshAsset(SkeletalMeshFragment->SkeletalMesh);
+							}
+
+							WeaponActor->SetAttachments(CWRInventoryItemInstance->GetAttachments());
+						}
 					}
 				}
 				

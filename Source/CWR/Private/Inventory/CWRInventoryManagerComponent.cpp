@@ -10,6 +10,7 @@
 #include "Inventory/CWRInventoryItemDefinition.h"
 #include "Inventory/CWRInventoryItemInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "Weapons/InventoryFragment_Attachments.h"
 
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(CWRInventoryManagerComponent)
@@ -93,13 +94,19 @@ UCWRInventoryItemInstance* FCWRInventoryList::AddEntry(TSubclassOf<UCWRInventory
 	FCWRInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
 	NewEntry.Instance = NewObject<UCWRInventoryItemInstance>(OwnerComponent->GetOwner());  //@TODO: Using the actor instead of component as the outer due to UE-127172
 	NewEntry.Instance->SetItemDef(ItemDef);
-	for (UCWRInventoryItemFragment* Fragment : GetDefault<UCWRInventoryItemDefinition>(ItemDef)->Fragments)
+	for (const UCWRInventoryItemFragment* Fragment : GetDefault<UCWRInventoryItemDefinition>(ItemDef)->Fragments)
 	{
 		if (Fragment != nullptr)
 		{
 			Fragment->OnInstanceCreated(NewEntry.Instance);
 		}
 	}
+
+	if (const auto AttachmentsFragment = NewEntry.Instance->FindFragmentByClass<UInventoryFragment_Attachments>() )
+	{
+		NewEntry.Instance->SetAttachments(AttachmentsFragment->Attachments);
+	}
+	
 	NewEntry.StackCount = StackCount;
 	Result = NewEntry.Instance;
 
@@ -111,7 +118,24 @@ UCWRInventoryItemInstance* FCWRInventoryList::AddEntry(TSubclassOf<UCWRInventory
 
 void FCWRInventoryList::AddEntry(UCWRInventoryItemInstance* Instance)
 {
-	unimplemented();
+	check(OwnerComponent);
+	
+	AActor* OwningActor = OwnerComponent->GetOwner();
+	check(OwningActor->HasAuthority());
+	
+	FCWRInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
+	NewEntry.Instance = Instance;
+	for (const UCWRInventoryItemFragment* Fragment : GetDefault<UCWRInventoryItemDefinition>(Instance->ItemDef)->Fragments)
+	{
+		if (Fragment != nullptr)
+		{
+			Fragment->OnInstanceCreated(NewEntry.Instance);
+		}
+	}
+	
+	NewEntry.StackCount = 1;
+	
+	MarkItemDirty(NewEntry);
 }
 
 void FCWRInventoryList::RemoveEntry(UCWRInventoryItemInstance* Instance)

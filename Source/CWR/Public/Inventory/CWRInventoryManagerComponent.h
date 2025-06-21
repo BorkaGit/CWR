@@ -92,6 +92,7 @@ public:
 	}
 
 	UCWRInventoryItemInstance* AddEntry(TSubclassOf<UCWRInventoryItemDefinition> ItemClass, int32 StackCount);
+	
 	void AddEntry(UCWRInventoryItemInstance* Instance);
 
 	void RemoveEntry(UCWRInventoryItemInstance* Instance);

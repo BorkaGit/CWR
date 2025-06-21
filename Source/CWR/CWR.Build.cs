@@ -32,8 +32,7 @@ public class CWR : ModuleRules
 				"Niagara",
 				"AsyncMixin",
 				"ControlFlows",
-				"PropertyPath",
-				"AkAudio"
+				"PropertyPath"
 			});
 		
 		PrivateDependencyModuleNames.AddRange(

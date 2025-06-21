@@ -9,6 +9,9 @@
 #include "CWRPlayerController.generated.h"
 
 
+class ACWRAttachmentActor;
+class UCommonActivatableWidget;
+class ACWRCustomizationPreview;
 class UCWRSettingsShared;
 class ACWRPlayerState;
 class ACWRHUD;
@@ -112,10 +115,52 @@ protected:
 	void LookMouse(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UCWRWeaponStateComponent> WeaponStateComponent;
+	TObjectPtr<UCWRWeaponStateComponent> WeaponStateComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<ACWRCustomizationPreview> CustomizationPreviewClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UCommonActivatableWidget> CustomizationWidgetClass = nullptr;
+	
+	UFUNCTION(BlueprintCallable, Client, Unreliable)
+	void ROC_SpawnPrimaryCustomizationWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void CreatePrimaryCustomizationWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void SwapPreviewPrimaryDefaultParts(TSubclassOf<ACWRAttachmentActor> InPreviewStock, TSubclassOf<ACWRAttachmentActor> InPreviewPistolGrip, TSubclassOf<ACWRAttachmentActor> InPreviewMuzzle, TSubclassOf<ACWRAttachmentActor> InPreviewFrontSight, TSubclassOf<ACWRAttachmentActor> InPreviewRearSight,TSubclassOf<ACWRAttachmentActor> InPreviewHandGuard);
+
+	UFUNCTION(BlueprintCallable, Client, Unreliable)
+	void ROC_PreparePrimaryWeapon(USkeletalMesh* NewMesh, ESlateVisibility InVisibility, bool bUnselectWeaponList);
 	
 private:
 
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRCustomizationPreview> CustomizableWeapon = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCommonActivatableWidget> CustomizationWidget = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewStock = nullptr;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewPistolGrip = nullptr;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewMuzzle = nullptr;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewFrontSight = nullptr;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewRearSight = nullptr;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ACWRAttachmentActor> PreviewHandle = nullptr;
+	
 	UPROPERTY()
 	UCWRInputComponent* CWRInputComponent = nullptr;
 	
@@ -145,4 +190,7 @@ private:
 	void OnPlayerStateChangedTeam(UObject* TeamAgent, int32 OldTeam, int32 NewTeam);
 
 	void BroadcastOnPlayerStateChanged();
+
+	UFUNCTION(Client, Unreliable)
+	void ROC_RemoveAllPrimaryDefaultParts();
 };

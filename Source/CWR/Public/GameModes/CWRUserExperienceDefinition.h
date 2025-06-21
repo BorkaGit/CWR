@@ -25,7 +25,7 @@ class UCWRUserExperienceDefinition : public UPrimaryDataAsset
 	FPrimaryAssetId MapID;
 
 	/** The gameplay experience to load */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience, meta=(AllowedTypes="LyraExperienceDefinition"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience, meta=(AllowedTypes="CWRExperienceDefinition"))
 	FPrimaryAssetId ExperienceID;
 
 	/** Extra arguments passed as URL options to the game */

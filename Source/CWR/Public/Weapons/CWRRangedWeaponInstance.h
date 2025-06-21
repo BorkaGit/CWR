@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "AkAudioEvent.h"
+//#include "AkAudioEvent.h"
 #include "Curves/CurveFloat.h"
 #include "CWRWeaponInstance.h"
 #include "GameplayTagContainer.h"
@@ -11,7 +11,6 @@
 
 #include "CWRRangedWeaponInstance.generated.h"
 
-class ACWRAttachmentActor;
 class UCWRWeaponCustomizationItem;
 class UGameplayAbility;
 class UCWRGameplayAbility;
@@ -29,25 +28,6 @@ enum class ECWRFireMode : uint8
 	Auto,
 	Single
 };
-
-USTRUCT(BlueprintType)
-struct FCWRAttachmentInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ACWRAttachmentActor> AttachmentClass = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 BaseIndex = INDEX_NONE;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName BaseSocket = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bActioned = false;
-};
-
 
 UCLASS(BlueprintType)
 class CWR_API UCWRRangedWeaponInstance : public UCWRWeaponInstance, public ICWRAbilitySourceInterface
@@ -71,7 +51,6 @@ public:
 	//~UCWREquipmentInstance interface
 	virtual void OnEquipped();
 	virtual void OnUnequipped();
-	virtual void SpawnEquipmentActors(const TArray<FCWREquipmentActorToSpawn>& ActorsToSpawn);
 	//~End of UCWREquipmentInstance interface
 	
 	void AddSpread();
@@ -139,8 +118,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE ECWRFireMode GetFireMode () const { return FireMode; }
 
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE TArray<FCWRAttachmentInfo> GetAttachments() const { return Attachments; }
+	
 	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetFireMode ( const ECWRFireMode NewFireMode ) { FireMode = NewFireMode; }
@@ -320,9 +298,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
 	ECWRFireMode FireMode = ECWRFireMode::Auto;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Setup")
-	TArray<FCWRAttachmentInfo> Attachments;
 
 	UPROPERTY(Transient, BlueprintReadOnly)
 	FTransform RecoilTransform = FTransform();

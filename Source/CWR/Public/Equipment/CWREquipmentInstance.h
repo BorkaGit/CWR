@@ -47,8 +47,6 @@ public:
 	UFUNCTION(BlueprintPure, Category=Equipment)
 	ACWRCharacter_Base* GetCWRCharacter() const;
 
-	
-
 	UFUNCTION(BlueprintPure, Category=Equipment, meta=(DeterminesOutputType=PawnType))
 	APawn* GetTypedPawn(TSubclassOf<APawn> PawnType) const;
 

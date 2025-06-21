@@ -214,21 +214,6 @@ bool UCWRRangedWeaponInstance::UpdateMultipliers(float DeltaSeconds)
 	return bStandingStillMultiplierAtMin && bCrouchingMultiplierAtTarget && bJumpFallMultiplerIs1 && bAimingMultiplierAtTarget;
 }
 
-void UCWRRangedWeaponInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActorToSpawn>& ActorsToSpawn)
-{
-	Super::SpawnEquipmentActors(ActorsToSpawn);
-
-	for (AActor* SpawnedActor : GetSpawnedActors())
-	{
-		if (const auto RangedWeaponActor =  Cast<ACWRWeaponActor>(SpawnedActor))
-		{
-			for (const auto Attachment : Attachments)
-			{	
-				//RangedWeaponActor->SpawnAttachment(Attachment);	
-			}
-		}
-	}
-}
 /*
 void UCWRRangedWeaponInstance::AddSpread()
 {

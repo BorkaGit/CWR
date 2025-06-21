@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemGlobals.h"
+#include "CommonActivatableWidget.h"
 #include "CommonInputSubsystem.h"
 #include "CWRGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
@@ -18,6 +19,8 @@
 #include "Player/CWRPlayerState.h"
 #include "Settings/CWRSettingsShared.h"
 #include "UI/HUD/CWRHUD.h"
+#include "UI/Weapons/CWRCustomizationPreview.h"
+#include "Weapons/CWRAttachmentActor.h"
 #include "Weapons/CWRWeaponStateComponent.h"
 
 namespace CWR
@@ -195,6 +198,34 @@ void ACWRPlayerController::BroadcastOnPlayerStateChanged()
 	ConditionalBroadcastTeamChanged(this, OldTeamID, NewTeamID);
 
 	LastSeenPlayerState = PlayerState;
+}
+
+void ACWRPlayerController::ROC_RemoveAllPrimaryDefaultParts_Implementation()
+{
+	if ( PreviewStock )
+	{
+		PreviewStock->Destroy();
+	}
+	if ( PreviewPistolGrip )
+	{
+		PreviewPistolGrip->Destroy();
+	}
+	if ( PreviewMuzzle )
+	{
+		PreviewMuzzle->Destroy();
+	}
+	if ( PreviewFrontSight )
+	{
+		PreviewFrontSight->Destroy();
+	}
+	if ( PreviewRearSight )
+	{
+		PreviewRearSight->Destroy();
+	}
+	if ( PreviewHandle )
+	{
+		PreviewHandle->Destroy();
+	}
 }
 
 void ACWRPlayerController::InitPlayerState()
@@ -500,6 +531,91 @@ void ACWRPlayerController::LookMouse(const FInputActionValue& Value)
 		ControlledPawn->AddControllerYawInput(LookAxisVector.X);
 		ControlledPawn->AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ACWRPlayerController::ROC_SpawnPrimaryCustomizationWeapon_Implementation()
+{
+	if ( !CustomizableWeapon )
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		CustomizableWeapon = GetWorld()->SpawnActor<ACWRCustomizationPreview>(CustomizationPreviewClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+	}
+}
+
+void ACWRPlayerController::CreatePrimaryCustomizationWeapon()
+{
+	if ( !CustomizationWidget )
+	{
+		CustomizationWidget = NewObject<UCommonActivatableWidget>(GetWorld(), CustomizationWidgetClass);
+		CustomizationWidget->AddToViewport();
+	}
+
+	SetViewTargetWithBlend(CustomizableWeapon, 0.25f);
+}
+
+void ACWRPlayerController::SwapPreviewPrimaryDefaultParts(TSubclassOf<ACWRAttachmentActor> InPreviewStock, TSubclassOf<ACWRAttachmentActor> InPreviewPistolGrip, TSubclassOf<ACWRAttachmentActor> InPreviewMuzzle, TSubclassOf<ACWRAttachmentActor> InPreviewFrontSight, TSubclassOf<ACWRAttachmentActor> InPreviewRearSight,TSubclassOf<ACWRAttachmentActor> InPreviewHandGuard)
+{
+	ROC_RemoveAllPrimaryDefaultParts();
+
+	if ( InPreviewStock )
+	{
+		PreviewStock = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewStock, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewStock->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_Stock");
+		PreviewStock->SetReplicates(false);
+	}
+
+	if ( InPreviewPistolGrip )
+	{
+		PreviewPistolGrip = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewPistolGrip, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewPistolGrip->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_Grip");
+		PreviewPistolGrip->SetReplicates(false);
+	}
+
+	if ( InPreviewMuzzle )
+	{
+		PreviewMuzzle = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewMuzzle, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewMuzzle->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_Muzzle");
+		PreviewMuzzle->SetReplicates(false);
+	}
+
+	if ( InPreviewFrontSight )
+	{
+		PreviewFrontSight = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewFrontSight, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewFrontSight->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_FrontSight_1");
+		PreviewFrontSight->SetReplicates(false);
+	}
+
+	if ( InPreviewRearSight )
+	{
+		PreviewRearSight = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewRearSight, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewRearSight->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_RearSight_1");
+		PreviewRearSight->SetReplicates(false);
+	}
+
+	if ( InPreviewHandGuard )
+	{
+		PreviewHandle = GetWorld()->SpawnActor<ACWRAttachmentActor>(InPreviewHandGuard, FVector::ZeroVector, FRotator::ZeroRotator);
+		FAttachmentTransformRules TransformRules = FAttachmentTransformRules::KeepRelativeTransform;
+		TransformRules.bWeldSimulatedBodies = true;
+		PreviewHandle->AttachToComponent(CustomizableWeapon->GetWeaponMesh(), TransformRules, "Base_Handle");
+		PreviewHandle->SetReplicates(false);
+	}
+}
+
+void ACWRPlayerController::ROC_PreparePrimaryWeapon_Implementation(USkeletalMesh* NewMesh, ESlateVisibility InVisibility, bool bUnselectWeaponList)
+{
+	CustomizableWeapon->GetWeaponMesh()->SetSkeletalMesh(NewMesh);
 }
 
 void ACWRPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)

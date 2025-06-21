@@ -3,7 +3,7 @@
 
 #include "Weapons/CWRWeaponActor.h"
 
-#include "AkComponent.h"
+//#include "AkComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
@@ -51,17 +51,17 @@ ACWRWeaponActor::ACWRWeaponActor()
 	FPShellEject->ArrowSize = 0.25f;
 	FPShellEject->SetupAttachment(FPMesh);
 
-	AkComponent = CreateDefaultSubobject<UAkComponent>(TEXT("AkComponent"));
-	AkComponent->SetupAttachment(RootComponent);
+	//AkComponent = CreateDefaultSubobject<UAkComponent>(TEXT("AkComponent"));
+	//AkComponent->SetupAttachment(RootComponent);
 
 
 }
 
 void ACWRWeaponActor::TriggerFireAudio() const
 {
-	if ( IsValid(AkComponent) )
+	//if ( IsValid(AkComponent) )
 	{
-		AkComponent->PostAkEvent(FireSound);
+	//	AkComponent->PostAkEvent(FireSound);
 	}
 }
 

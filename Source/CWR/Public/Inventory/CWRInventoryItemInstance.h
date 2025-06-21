@@ -7,6 +7,7 @@
 
 #include "CWRInventoryItemInstance.generated.h"
 
+class ACWRAttachmentActor;
 class UCWRInventoryItemDefinition;
 class UCWRInventoryItemFragment;
 class FLifetimeProperty;
@@ -15,6 +16,23 @@ class FLifetimeProperty;
 struct FFrame;
 struct FGameplayTag;
 
+USTRUCT(BlueprintType)
+struct FCWRAttachmentInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ACWRAttachmentActor> AttachmentClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 BaseIndex = INDEX_NONE;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName BaseSocket = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bActioned = false;
+};
 
 /**
  * UCWRInventoryItemInstance
@@ -26,6 +44,10 @@ class CWR_API UCWRInventoryItemInstance : public UObject
 	
 	public:
 	UCWRInventoryItemInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
+	FORCEINLINE TArray<FCWRAttachmentInfo> GetAttachments() const { return Attachments; }
+	
+	FORCEINLINE void SetAttachments(const TArray<FCWRAttachmentInfo>& InAttachments) { Attachments = InAttachments; }
 	
 	//~UObject interface
 	virtual bool IsSupportedForNetworking() const override { return true; }
@@ -47,6 +69,7 @@ class CWR_API UCWRInventoryItemInstance : public UObject
 	UFUNCTION(BlueprintCallable, Category=Inventory)
 	bool HasStatTag(FGameplayTag Tag) const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TSubclassOf<UCWRInventoryItemDefinition> GetItemDef() const
 	{
 		return ItemDef;
@@ -61,12 +84,18 @@ class CWR_API UCWRInventoryItemInstance : public UObject
 		return (ResultClass*)FindFragmentByClass(ResultClass::StaticClass());
 	}
 
+protected:
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Setup")
+	TArray<FCWRAttachmentInfo> Attachments;
+	
 private:
 #if UE_WITH_IRIS
 	/** Register all replication fragments */
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
 #endif // UE_WITH_IRIS
 
+	UFUNCTION(BlueprintCallable)
 	void SetItemDef(TSubclassOf<UCWRInventoryItemDefinition> InDef);
 
 	friend struct FCWRInventoryList;
@@ -78,6 +107,5 @@ private:
 	// The item definition
 	UPROPERTY(Replicated)
 	TSubclassOf<UCWRInventoryItemDefinition> ItemDef;
-	
 	
 };
