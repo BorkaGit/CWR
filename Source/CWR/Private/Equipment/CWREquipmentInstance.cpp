@@ -93,7 +93,7 @@ void UCWREquipmentInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActor
 			for (const FCWREquipmentActorToSpawn& SpawnInfo : ActorsToSpawn)
 			{
 				FActorSpawnParameters SpawnParameters;
-				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
+				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, OwningPawn->GetActorTransform(), OwningPawn);
 
 				const auto WeaponActor = Cast<ACWRWeaponActor>(NewActor);
 				
@@ -114,7 +114,7 @@ void UCWREquipmentInstance::SpawnEquipmentActors(const TArray<FCWREquipmentActor
 					}
 				}
 				
-				NewActor->FinishSpawning(FTransform::Identity, true);
+				NewActor->FinishSpawning(OwningPawn->GetActorTransform(), true);
 
 				if ( WeaponActor )
 				{

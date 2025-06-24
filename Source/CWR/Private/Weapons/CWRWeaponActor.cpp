@@ -486,7 +486,7 @@ void ACWRWeaponActor::CalculateSightTransform()
 
 				FRotator InverseRotation = RightHandTransform.InverseTransformRotation(SightRotation.Quaternion()).Rotator();
 					
-				FRotator NewRotation = FRotator(RelativeSightToHandTransform.Rotator().Roll,InverseRotation.Pitch, InverseRotation.Yaw);
+				FRotator NewRotation = FRotator(InverseRotation.Pitch, InverseRotation.Yaw, RelativeSightToHandTransform.Rotator().Roll);
 				NewTransform.SetRotation(NewRotation.Quaternion());
 			}
 				
@@ -588,8 +588,10 @@ void ACWRWeaponActor::FindSights()
 	CurrentSightIndex = 0;
 
 	TArray<UPrimitiveComponent*> ComponentArray;
+
 	
-	if ( UMeshComponent* MeshComponent = GetComponentByClass<UMeshComponent>() )
+	
+	if ( UMeshComponent* MeshComponent = static_cast<UMeshComponent*>(FPMesh) )
 	{
 		ComponentArray.AddUnique(MeshComponent);
 
