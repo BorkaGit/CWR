@@ -10,6 +10,7 @@
 #include "Teams/CWRTeamAgentInterface.h"
 #include "CWRCharacter_Base.generated.h"
 
+class UCWRInventoryItemInstance;
 class USplineComponent;
 class UCameraComponent;
 class USpringArmComponent;
@@ -432,8 +433,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultBaseAttributes;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	//TArray<TSubclassOf<UCWRInventoryItemDefinition>> InitialInventoryItems;
+	UPROPERTY()
+	TArray<TObjectPtr<UCWRInventoryItemInstance>> InitialInventoryItems;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;

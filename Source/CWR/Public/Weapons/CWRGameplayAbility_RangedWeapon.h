@@ -23,7 +23,7 @@ public:
 	UCWRRangedWeaponInstance* GetWeaponInstance() const;
 	
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE ACWRCharacter_Player* GetWeaponHolder() const { return WeaponHolder; }
+	FORCEINLINE ACWRCharacter_Base* GetWeaponHolder() const { return WeaponHolder; }
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UAnimInstance* GetWeaponAnimInstance1P() const { return WeaponAnimInstance1P; }
@@ -48,7 +48,7 @@ public:
 protected:
 
 	UPROPERTY(BlueprintReadOnly)
-	ACWRCharacter_Player* WeaponHolder;
+	ACWRCharacter_Base* WeaponHolder;
 
 	UPROPERTY(BlueprintReadOnly)
 	UAnimInstance* WeaponAnimInstance1P;

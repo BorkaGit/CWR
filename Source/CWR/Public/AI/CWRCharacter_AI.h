@@ -24,6 +24,8 @@ public:
 
 protected:
 
+	virtual void AddInitialInventory() override;
+	
 	UPROPERTY(EditAnywhere, Category = "AI")
 	TObjectPtr<UBehaviorTree> BehaviorTree = nullptr;
 
@@ -35,6 +37,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RecoilControl = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<TSubclassOf<UCWRInventoryItemDefinition>> InitialInventoryItemsClasses;
 	
 private:
 

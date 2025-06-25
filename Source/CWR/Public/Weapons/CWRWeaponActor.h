@@ -61,6 +61,8 @@ struct FCWRSightData
 	}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScopeEnabled, bool, bEnabled);
+
 UCLASS(Blueprintable)
 class CWR_API ACWRWeaponActor : public AActor, public IInteractionInterface
 {
@@ -221,8 +223,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CalculateSightTransform();
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
-	void EnableScope(bool bInEnabled);
+	UPROPERTY(BlueprintAssignable)
+	FOnScopeEnabled OnScopeEnabled;
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void EnableLaser(bool bInToggle);

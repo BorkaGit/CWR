@@ -5,7 +5,6 @@
 
 #include "AbilitySystem/CWRAbilitySystemComponent.h"
 #include "Animation/CWRPreCMCTick.h"
-#include "Camera/CameraComponent.h"
 #include "Character/CWRCharacterMovementComponent.h"
 #include "Character/CWRHealthComponent.h"
 #include "Character/CWRPawnExtensionComponent.h"
@@ -13,7 +12,6 @@
 #include "Components/SplineComponent.h"
 #include "Equipment/CWREquipmentManagerComponent.h"
 #include "Equipment/CWRQuickBarComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Inventory/CWRInventoryItemDefinition.h"
 #include "Inventory/CWRInventoryItemInstance.h"
 #include "Inventory/CWRInventoryManagerComponent.h"
@@ -24,9 +22,7 @@
 #include "Player/CWRPlayerController.h"
 #include "Player/CWRPlayerState.h"
 #include "Weapons/CWRRangedWeaponInstance.h"
-#include "Character/CWRPawnData.h"
 #include "Kismet/GameplayStatics.h"
-#include "System/CWRGameInstance.h"
 #include "Weapons/CWRWeaponActor.h"
 
 static FName NAME_CWRCharacterCollisionProfile_Capsule(TEXT("CWRPawnCapsule"));
@@ -233,7 +229,7 @@ void ACWRCharacter_Base::SVR_EnterAiming_Implementation()
 	
 	if ( CurrentWeapon )
 	{
-		CurrentWeapon->EnableScope(true);
+		CurrentWeapon->OnScopeEnabled.Broadcast(true);
 	}
 }
 
@@ -254,7 +250,7 @@ void ACWRCharacter_Base::SVR_ExitAiming_Implementation()
 
 	if (CurrentWeapon)
 	{
-		CurrentWeapon->EnableScope(false);
+		CurrentWeapon->OnScopeEnabled.Broadcast(false);
 	}
 }
 
@@ -900,20 +896,14 @@ void ACWRCharacter_Base::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gameplay
 
 void ACWRCharacter_Base::AddInitialInventory()
 {
-	if ( !HasAuthority() || !IsValid(GetController()) ) return;
-
-	const auto InventoryManager = GetController()->GetComponentByClass<UCWRInventoryManagerComponent>();
 	const auto QuickBar = GetController()->GetComponentByClass<UCWRQuickBarComponent>();
 
-	if ( !IsValid(InventoryManager) || !IsValid(QuickBar) ) return;
-
-	TArray<TObjectPtr<UCWRInventoryItemInstance>> InitialInventoryItems = Cast<UCWRGameInstance>(GetGameInstance())->GetInitialInventoryItems();
+	if ( !IsValid(QuickBar) ) return;
 	
-	for ( int32 i = 0; i < InitialInventoryItems.Num(); ++i )
+	for ( TObjectPtr<UCWRInventoryItemInstance> InitialInventoryItem : InitialInventoryItems )
 	{
-		InventoryManager->AddItemInstance(InitialInventoryItems[i]);
-		const int32 ItemSlot = QuickBar->FindSlotIndex(InitialInventoryItems[i]->GetItemDef());
-		QuickBar->AddItemToSlot(ItemSlot, InitialInventoryItems[i]);
+		const int32 ItemSlot = QuickBar->FindSlotIndex(InitialInventoryItem->GetItemDef());
+		QuickBar->AddItemToSlot(ItemSlot, InitialInventoryItem);
 	}
 
 	if ( !InitialInventoryItems.IsEmpty() )

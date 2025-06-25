@@ -544,7 +544,7 @@ void ACWRWeaponActor::SpawnFPAttachments(const TSubclassOf<ACWRAttachmentActor>&
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParameters.TransformScaleMethod = ESpawnActorScaleMethod::SelectDefaultAtRuntime;
 	SpawnParameters.bDeferConstruction = true;
-	SpawnParameters.Owner = GetOwningCharacter();
+	SpawnParameters.Owner = this;
 	ACWRAttachmentActor* Attachment = GetWorld()->SpawnActor<ACWRAttachmentActor>(AttachmentClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParameters);
 	Attachment->SetVisibility(true);
 	Attachment->SetFP(true);
@@ -588,8 +588,6 @@ void ACWRWeaponActor::FindSights()
 	CurrentSightIndex = 0;
 
 	TArray<UPrimitiveComponent*> ComponentArray;
-
-	
 	
 	if ( UMeshComponent* MeshComponent = static_cast<UMeshComponent*>(FPMesh) )
 	{

@@ -55,6 +55,8 @@ protected:
 
 	virtual void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const override;
 
+	virtual void AddInitialInventory() override;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_SightTransform)
 	FTransform SightTransform = FTransform::Identity;
 	

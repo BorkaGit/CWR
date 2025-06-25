@@ -15,7 +15,7 @@ void UCWRGameplayAbility_RangedWeapon::OnAvatarSet(const FGameplayAbilityActorIn
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
 
-	WeaponHolder = Cast<ACWRCharacter_Player>(GetAvatarActorFromActorInfo());
+	WeaponHolder = Cast<ACWRCharacter_Base>(GetAvatarActorFromActorInfo());
 }
 
 void UCWRGameplayAbility_RangedWeapon::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)

@@ -12,9 +12,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Inventory/CWRInventoryManagerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/CWRPlayerController.h"
 #include "Player/CWRPlayerState.h"
+#include "System/CWRGameInstance.h"
 #include "UI/HUD/CWRHUD.h"
 #include "Weapons/CWRDroppedMagazineActor.h"
 #include "Weapons/CWRRangedWeaponInstance.h"
@@ -118,6 +120,22 @@ void ACWRCharacter_Player::InitializeDefaultAttributes() const
 void ACWRCharacter_Player::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const
 {
 	Super::ApplyEffectToSelf(GameplayEffectClass, Level);
+}
+
+void ACWRCharacter_Player::AddInitialInventory()
+{
+	InitialInventoryItems = Cast<UCWRGameInstance>(GetGameInstance())->GetInitialInventoryItems();
+
+	const auto InventoryManager = GetController()->GetComponentByClass<UCWRInventoryManagerComponent>();
+
+	if ( !IsValid(InventoryManager)) return;
+	
+	for ( TObjectPtr<UCWRInventoryItemInstance> InventoryItem : InitialInventoryItems)
+	{
+		InventoryManager->AddItemInstance(InventoryItem);
+	}
+	
+	Super::AddInitialInventory();
 }
 
 void ACWRCharacter_Player::OnRep_SightTransform()
