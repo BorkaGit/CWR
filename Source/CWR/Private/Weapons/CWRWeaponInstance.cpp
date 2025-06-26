@@ -4,6 +4,7 @@
 #include "Weapons/CWRWeaponInstance.h"
 
 #include "Character/CWRHealthComponent.h"
+#include "CWR/CWRCharacter_Player.h"
 #include "GameFramework/InputDeviceSubsystem.h"
 
 UCWRWeaponInstance::UCWRWeaponInstance(const FObjectInitializer& ObjectInitializer)
@@ -31,6 +32,13 @@ void UCWRWeaponInstance::OnEquipped()
 	const UWorld* World = GetWorld();
 	check(World);
 	TimeLastEquipped = World->GetTimeSeconds();
+
+	if (const auto PlayerCharacter = Cast<ACWRCharacter_Player>(GetCWRCharacter()) )
+	{
+		PlayerCharacter->PlayMontage1P(FPMontage_EquipWeapon);
+	}
+
+	GetCWRCharacter()->PlayMontage3P(TPMontage_EquipWeapon);
 	
 	ApplyDeviceProperties();
 }
@@ -39,6 +47,13 @@ void UCWRWeaponInstance::OnUnequipped()
 {
 	Super::OnUnequipped();
 
+	if (const auto PlayerCharacter = Cast<ACWRCharacter_Player>(GetCWRCharacter()) )
+	{
+		PlayerCharacter->PlayMontage1P(FPMontage_UnequipWeapon);
+	}
+
+	GetCWRCharacter()->PlayMontage3P(TPMontage_UnequipWeapon);
+	
 	RemoveDeviceProperties();
 }
 

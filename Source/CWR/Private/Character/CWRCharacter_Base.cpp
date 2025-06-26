@@ -173,6 +173,20 @@ void ACWRCharacter_Base::NotifyControllerChanged()
 	}
 }
 
+void ACWRCharacter_Base::PlayMontage(const USkeletalMeshComponent* MeshCompToPlayOn, UAnimMontage* MontageToPlay)
+{
+	if ( UAnimInstance* AnimInstanceToPlayOn = MeshCompToPlayOn->GetAnimInstance() )
+	{
+		AnimInstanceToPlayOn->Montage_Play(MontageToPlay);
+	}
+}
+
+void ACWRCharacter_Base::PlayMontage3P(UAnimMontage* MontageToPlay) const
+{
+	PlayMontage(GetMesh(), MontageToPlay);
+}
+
+
 ACWRPlayerController* ACWRCharacter_Base::GetCWRPlayerController() const
 {
 	return CastChecked<ACWRPlayerController>(Controller, ECastCheckedType::NullAllowed);

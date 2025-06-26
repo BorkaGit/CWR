@@ -158,6 +158,11 @@ void ACWRCharacter_Player::ROC_SpawnMag_Implementation()
 	}
 }
 
+void ACWRCharacter_Player::PlayMontage1P(UAnimMontage* MontageToPlay) const
+{
+	PlayMontage(Mesh1P, MontageToPlay);
+}
+
 void ACWRCharacter_Player::BeginPlay()
 {
 	Super::BeginPlay();

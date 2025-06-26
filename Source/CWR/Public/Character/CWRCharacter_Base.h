@@ -4,6 +4,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "GameplayCueInterface.h"
+#include "Animation/AnimInstance.h"
 #include "GameplayTagAssetInterface.h"
 #include "ModularCharacter.h"
 #include "GameFramework/Character.h"
@@ -112,6 +113,10 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void AttachWeapon(AActor* Weapon);
+	
+	static void PlayMontage(const USkeletalMeshComponent* MeshCompToPlayOn, UAnimMontage* MontageToPlay);
+	
+	void PlayMontage3P(UAnimMontage* MontageToPlay) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "CWR|Character")
 	ACWRPlayerController* GetCWRPlayerController() const;

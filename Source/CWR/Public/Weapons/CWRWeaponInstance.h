@@ -39,6 +39,18 @@ class CWR_API UCWRWeaponInstance : public UCWREquipmentInstance
 	float GetTimeSinceLastInteractedWith() const;
 	
 protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="TPAnimations")
+	TObjectPtr<UAnimMontage> TPMontage_UnequipWeapon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="TPAnimations")
+	TObjectPtr<UAnimMontage> TPMontage_EquipWeapon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FPAnimations")
+	TObjectPtr<UAnimMontage> FPMontage_UnequipWeapon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FPAnimations")
+	TObjectPtr<UAnimMontage> FPMontage_EquipWeapon = nullptr;
 	
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation)
 	//FCWRAnimLayerSelectionSet EquippedAnimSet;

@@ -44,6 +44,8 @@ public:
 	FORCEINLINE void SetSightTransform(const FTransform InSightTransform ) {  SightTransform = InSightTransform; }
 
 	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+
+	void PlayMontage1P(UAnimMontage* MontageToPlay) const;
 	
 protected:
 
