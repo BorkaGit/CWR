@@ -33,12 +33,16 @@ void UCWRWeaponInstance::OnEquipped()
 	check(World);
 	TimeLastEquipped = World->GetTimeSeconds();
 
-	if (const auto PlayerCharacter = Cast<ACWRCharacter_Player>(GetCWRCharacter()) )
+	ACWRCharacter_Base* CWRCharacter = GetCWRCharacter();
+	
+	if (const auto PlayerCharacter = Cast<ACWRCharacter_Player>(CWRCharacter) )
 	{
 		PlayerCharacter->PlayMontage1P(FPMontage_EquipWeapon);
 	}
+	
+	CWRCharacter->PlayMontage3P(TPMontage_EquipWeapon);
 
-	GetCWRCharacter()->PlayMontage3P(TPMontage_EquipWeapon);
+	CWRCharacter->SetRestIdleAnim(TPMontage_Idle);
 	
 	ApplyDeviceProperties();
 }

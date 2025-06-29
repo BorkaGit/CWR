@@ -11,6 +11,7 @@
 #include "Teams/CWRTeamAgentInterface.h"
 #include "CWRCharacter_Base.generated.h"
 
+class UCWRWeaponInstance;
 class UCWRInventoryItemInstance;
 class USplineComponent;
 class UCameraComponent;
@@ -110,13 +111,16 @@ class CWR_API ACWRCharacter_Base : public AModularCharacter, public IAbilitySyst
 public:
 
 	ACWRCharacter_Base(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void AttachWeapon(AActor* Weapon);
 	
 	static void PlayMontage(const USkeletalMeshComponent* MeshCompToPlayOn, UAnimMontage* MontageToPlay);
 	
 	void PlayMontage3P(UAnimMontage* MontageToPlay) const;
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetRestIdleAnim(UAnimSequence* InRestIdleAnim) { RestIdleAnim = InRestIdleAnim; }
 	
 	UFUNCTION(BlueprintCallable, Category = "CWR|Character")
 	ACWRPlayerController* GetCWRPlayerController() const;
@@ -444,6 +448,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<UAnimSequence> RestIdleAnim = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float BaseWalkSpeed = 100.f;
 	

@@ -46,6 +46,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="TPAnimations")
 	TObjectPtr<UAnimMontage> TPMontage_EquipWeapon = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="TPAnimations")
+	TObjectPtr<UAnimSequence> TPMontage_Idle = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FPAnimations")
 	TObjectPtr<UAnimMontage> FPMontage_UnequipWeapon = nullptr;
 
